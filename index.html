@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>cover</title>
+     <link rel="stylesheet" type="text/css" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+  
+</head>
+<body style="
+    margin: 0; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    height: 100vh; 
+    width: 100vw; 
+    background-color: #0C0526;
+">
+
+<div class="main-container" style=" display: flex;
+        flex-direction: column;  /* 关键：让子元素垂直排列 */
+        align-items: center;     /* 让画布和按钮水平居中对齐 */
+        gap: 20px;">
+    <div id="canvasContainer"></div>
+    <button id="nextBtn" style="font-size:1.5rem;padding: 10px 20px 10px 20px">START</button>
+</div>
+
+    <script>
+        const sketch = (p) => {
+            const FREQUENCY = 0.02;
+            const OFFSET_Y = 200; // 居中显示
+            const AMPLITUDE = 80; // 固定振幅
+
+            let bg;
+            p.preload = () => {
+                bg = p.loadImage('assets/background.png'); 
+            };
+
+            p.setup = () => {
+                const canvas = p.createCanvas(800, 400);
+                canvas.parent('canvasContainer');
+            };
+
+            p.draw = () => {
+                p.push(); 
+           
+                p.tint(255, 150); 
+                
+                // 将图片绘制为背景，铺满整个画布
+                p.image(bg, 0, 0, p.width, p.height);
+                
+                p.pop(); // 恢复之前的样式设置
+                // 绘制手绘感波浪
+                drawHandDrawnWave();
+            };
+
+            function getWaveY(x) {
+                // 自动演化的相位，让曲线动起来
+                let dynamicPhase = p.frameCount * 0.05; 
+                return OFFSET_Y - (AMPLITUDE * p.sin(x * FREQUENCY + dynamicPhase));
+            }
+
+            function drawHandDrawnWave() {
+                p.noFill();
+                p.strokeWeight(3);
+                
+                // 绘制两层叠加，模拟霓虹/手绘感
+                for (let i = 0; i < 2; i++) {
+                    // 第一层青色，第二层淡青色
+                    p.stroke(0, 255, 255, 180 - i * 80);
+                    
+                    p.beginShape();
+                    for (let x = 0; x <= p.width; x += 5) { // 减小步长使曲线更平滑
+                        let baseY = getWaveY(x);
+                        
+                        // 加入微小的随机抖动 (Jitter)
+                        let noiseVal = p.noise(x * 0.05, p.frameCount * 0.08 + i);
+                        let jitter = p.map(noiseVal, 0, 1, -1.5, 1.5);
+                        
+                        p.vertex(x, baseY + jitter);
+                    }
+                    p.endShape();
+                }
+            }
+        };
+        document.getElementById('nextBtn').addEventListener('click', () => {
+    // 这里写进入下一关的逻辑
+    window.location.href = 'demo.html';
+});
+
+        new p5(sketch);
+    </script>
+</body>
+</html>

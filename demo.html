@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>wave1</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+</head>
+<body>
+
+    <div class="ui">
+        <div>
+            <label>y = <span id="ampLabel">50</span> * sin(0.02x + <span id="phaseLabel">0.0</span>) + 320</label>
+        </div>
+
+        <div class="control-group">
+            <label>Amplitude: </label>
+            <input type="range" id="ampSlider" min="0" max="150" value="50" step="1" style="width: 100%;">
+        </div>
+
+        <div class="control-group">
+            <label>Phase: </label>
+            <input type="range" id="phaseSlider" min="0" max="6.28" value="0" step="0.01" style="width: 100%;">
+        </div>
+
+        <div id="status"> </div>
+        <button id="nextBtn" style="display: none;">NEXT LEVEL</button>
+</div>
+
+    <div id="canvasContainer"></div>
+
+    <script>
+      
+
+        const ampSlider = document.getElementById('ampSlider');
+        const phaseSlider = document.getElementById('phaseSlider');
+        const ampLabel = document.getElementById('ampLabel');
+        const phaseLabel = document.getElementById('phaseLabel');
+        const statusLabel = document.getElementById('status');
+
+        const sketch = (p) => {
+            // 物理常量
+            const GRAVITY = 0.6;
+            const DAMPING = 0.98;
+            const FREQUENCY = 0.02;
+            const OFFSET_Y = 320;
+            const PLATFORM = { x: 550, y: 200, w: 120, h: 15 };
+
+            // 状态变量
+            let amplitude = 50;
+            let phase = 0;
+            let ball = { x: 100, y: 100, vx: 1.5, vy: 0, radius: 10 };
+            let hasWon = false;
+
+            p.setup = () => {
+                const canvas = p.createCanvas(800, 400);
+                canvas.parent('canvasContainer');
+                
+                // UI 事件监听
+                ampSlider.oninput = (e) => {
+                    amplitude = parseFloat(e.target.value);
+                    ampLabel.innerText = amplitude;
+                };
+                phaseSlider.oninput = (e) => {
+                    phase = parseFloat(e.target.value);
+                    phaseLabel.innerText = phase.toFixed(2);
+                };
+            };
+
+            p.draw = () => {
+                p.clear(20);
+                p.background(0,0,0,100);
+                updatePhysics();
+                
+          
+            p.push();
+
+            p.drawingContext.shadowOffsetX = 0;
+            p.drawingContext.shadowOffsetY = 0;
+            p.drawingContext.shadowBlur = 20; 
+            p.drawingContext.shadowColor = 'rgba(255, 0, 255, 0.8)'; 
+
+            p.noStroke();
+            p.fill(255, 0, 255);
+            p.rect(PLATFORM.x, PLATFORM.y, PLATFORM.w, PLATFORM.h, 4);
+
+            p.pop();
+
+                // 2. 绘制具有“手绘感”的动态波浪
+                drawHandDrawnWave();
+
+                // 3. 绘制小球
+                // 在 p.draw() 内部的小球绘制部分替换为：
+
+// 1. 计算当前振幅与目标“共振”振幅的匹配度
+// 假设关卡目标振幅是 120 (你可以根据关卡逻辑动态修改这个数值)
+let targetGoalAmp = 120; 
+let diff = p.abs(targetGoalAmp - amplitude); 
+
+// 2. 计算视觉反馈参数
+// 差值越小（越接近目标），共鸣色越亮，颤动越剧烈
+let resonance = p.map(diff, 0, 100, 255, 50); // 映射透明度 (0-255)
+let tremble = p.map(p.constrain(diff, 0, 20), 0, 20, 4, 0); // 映射颤动位移
+
+// 3. 绘制多层效果
+p.push();
+
+// 绘制外层共鸣晕（带随机颤动）
+p.noStroke();
+p.fill(255, 150, 255, resonance * 0.6); 
+let tx = p.random(-tremble, tremble);
+let ty = p.random(-tremble, tremble);
+p.ellipse(ball.x + tx, ball.y + ty, ball.radius * 2.8);
+
+// 绘制核心球体
+p.fill(255, 255, 255, resonance); // 核心白色
+p.ellipse(ball.x + tx * 0.5, ball.y + ty * 0.5, ball.radius * 2);
+
+p.pop();
+    
+            };
+
+            function getWaveY(x) {
+                // 标准公式：y = A * sin(kx + φ)
+                // 注意：为了让滑块向右滑动时波浪向左移（符合直觉），这里用加法
+                let dynamicPhase = p.frameCount * 0.05; 
+    
+    // 组合公式：y = A * sin(kx + φ_manual + φ_dynamic)
+                return OFFSET_Y - (amplitude * p.sin(x * FREQUENCY + phase + dynamicPhase));
+                return OFFSET_Y - (amplitude * p.sin(x * FREQUENCY + phase));
+            }
+
+            function drawHandDrawnWave() {
+                p.noFill();
+                p.strokeWeight(3);
+                
+                // 绘制三层轻微偏移的线来模拟手绘感
+                for (let i = 0; i < 2; i++) {
+                    p.stroke(0, 255, 255, 150 - i * 50);
+                    p.beginShape();
+                    for (let x = 0; x <= p.width; x += 8) {
+                        let baseY = getWaveY(x);
+                        // 加入微小的随机抖动
+                        let noiseVal = p.noise(x * 0.05, p.frameCount * 0.1 + i);
+                        let jitter = p.map(noiseVal, 0, 1, -2, 2);
+                        p.vertex(x, baseY + jitter);
+                    }
+                    p.endShape();
+                }
+            }
+
+            function updatePhysics() {
+                ball.vy += GRAVITY;
+                ball.y += ball.vy;
+                ball.vy *= DAMPING;
+
+                let waveYAtBall = getWaveY(ball.x);
+                if (ball.y + ball.radius > waveYAtBall) {
+                    ball.y = waveYAtBall - ball.radius;
+                    // 如果波浪正在剧烈波动，给小球一个向上的分力
+                    if (ball.vy > 0) ball.vy *= -0.1; 
+                }
+
+                // 平台碰撞判定
+                if (ball.x + ball.radius > PLATFORM.x && ball.x - ball.radius < PLATFORM.x + PLATFORM.w) {
+                    if (ball.y + ball.radius > PLATFORM.y && ball.y - ball.radius < PLATFORM.y + PLATFORM.h) {
+                        if (ball.vy > 0 && ball.y < PLATFORM.y + 10) {
+                            ball.y = PLATFORM.y - ball.radius;
+                            ball.vy = 0;
+                            ball.vx = 0;
+                            if (!hasWon) {
+                                statusLabel.innerText = "Bingo!";
+                                statusLabel.className = "win";
+                                nextBtn.style.display = "inline-block"; // 显示按钮
+                                hasWon = true;
+                            }
+                        }
+                    }
+                }
+
+                if (!hasWon) {
+                    ball.x += ball.vx;
+                    if (ball.x > p.width) ball.x = 0;
+                }
+            }
+            // 为按钮绑定点击事件
+document.getElementById('nextBtn').addEventListener('click', () => {
+    // 这里写进入下一关的逻辑
+    window.location.href = 'level1.html';
+});
+        };
+
+        new p5(sketch);
+    </script>
+</body>
+</html>

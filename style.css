@@ -1,0 +1,162 @@
+
+body { 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    background: #2D1B6B; 
+    color: #ffffff; 
+    margin: 0;
+    padding: 20px;
+    image-rendering: pixelated;
+    -webkit-font-smoothing: none;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+#canvasContainer { 
+    border: 2px solid #00FFFF; 
+    background: #1A103D; 
+    margin-top: 10px; 
+    line-height: 0; 
+    box-shadow: 0 0 50px rgba(0, 255, 255, 0.3); 
+}
+
+#canvasContainer canvas {
+    background-image: url(assets/tile.png); 
+    background-size: 80px 80px; 
+    background-repeat: repeat;
+    image-rendering: pixelated; 
+    image-rendering: crisp-edges;
+}
+
+.ui { 
+    margin: 20px auto; 
+    padding: 25px; 
+    background: #8A2BE2; 
+    border-radius: 4px; 
+    width: 450px;
+    text-align: center; 
+    border: 2px solid #ffffff; 
+    box-shadow: 4px 4px 0px #000; 
+}
+
+
+.ui label {
+    font-family: monospace;
+    display: block;
+    margin-bottom: 12px;
+    font-size: 1rem;      
+    letter-spacing: 0.5px; 
+    color: #ffffff;
+    text-align: left;   
+    text-shadow: 1px 1px #000; 
+}
+
+.ui span {
+    color: #77FFFF;      
+    font-weight: normal;
+}
+
+.control-group { 
+    margin-bottom: 1rem; 
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+#status {  
+    height: 1rem; 
+    font-size: 1rem;
+    font-family: monospace;
+}
+
+.win { 
+    color: #00FF00; 
+    
+}
+
+
+
+
+/* --- 基础样式清理 --- */
+input[type="range"] {
+    -webkit-appearance: none; /* 必须：隐藏默认样式 */
+    appearance: none;         /* 标准属性：修复警告的核心 */
+    width: 100%;
+    background: transparent; /* 轨道背景在伪元素里定义 */
+    cursor: pointer;
+}
+
+/* --- Chrome, Edge, Safari (WebKit 内核) --- */
+
+/* 1. 修改轨道 (Track) */
+input[type="range"]::-webkit-slider-runnable-track {
+    height: 8px;
+    background: #1A103D;    /* 你的画布背景色 */
+    border-radius: 4px;
+    border: 1px solid #8A2BE2; /* 紫色边框 */
+}
+
+/* 2. 修改滑块 (Thumb) */
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 20px;
+    width: 10px;
+    background: #00FFFF;    /* 青色滑块，呼应 Canvas 边框 */
+    margin-top: -7px;       /* 居中算法：(轨道高度/2) - (滑块高度/2) */
+    border-radius: 2px;
+    box-shadow: 2px 2px 0px #000; /* 复古像素感阴影 */
+}
+
+/* --- Firefox --- */
+
+/* 1. 修改轨道 */
+input[type="range"]::-moz-range-track {
+    height: 8px;
+    background: #1A103D;
+    border-radius: 4px;
+}
+
+/* 2. 修改滑块 */
+input[type="range"]::-moz-range-thumb {
+    height: 20px;
+    width: 10px;
+    background: #00FFFF;
+    border: none;
+    border-radius: 2px;
+    box-shadow: 2px 2px 0px #000;
+}
+
+/* 鼠标悬停在滑块上时 */
+input[type="range"]:hover::-webkit-slider-thumb {
+    background: #ff00ff; /* 变成奶油橘 */
+    transform: scale(1.1);
+}
+
+/* 正在拖动时 */
+input[type="range"]:active::-webkit-slider-thumb {
+    box-shadow: 0 0 10px #ff00ff;
+}
+
+#nextBtn {
+    margin-top: 15px;
+    padding: 5px 20px;
+    background: #00FFFF;      /* 胜利的绿色 */
+    color: #1A103D;           /* 深色文字 */
+    font-family: monospace;
+    font-size: 1rem;
+    border: 1px solid #FFF;
+    border-radius: 4px;
+    cursor: pointer;
+    box-shadow: 4px 4px 0px #000;
+    transition: transform 0.1s;
+}
+
+#nextBtn:hover {
+    background: #ff00ff;    
+    transform: scale(1.05);
+}
+
+#nextBtn:active {
+    transform: translateY(2px);
+    box-shadow: 2px 2px 0px #000;
+}

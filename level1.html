@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>wave2</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+</head>
+<body>
+
+    <div class="ui">
+        <div>
+            <label>y = <span id="ampLabel">150</span> * sin(<span id="freqLabel">0.020</span>x + t) + 320</label>
+        </div>
+
+        <div class="control-group">
+            <label>Amplitude: </label>
+            <input type="range" id="ampSlider" min="100" max="180" value="150" step="1">
+        </div>
+
+        <div class="control-group">
+            <label>Frequency: </label>
+            <input type="range" id="freqSlider" min="0.005" max="0.100" value="0.010" step="0.001">
+        </div>
+
+        <div id="status"> </div>
+        <button id="nextBtn" style="display: none;">NEXT LEVEL</button>
+    </div>
+
+    <div id="canvasContainer"></div>
+
+    <script>
+       const ampSlider = document.getElementById('ampSlider');
+const freqSlider = document.getElementById('freqSlider');
+const ampLabel = document.getElementById('ampLabel');
+const freqLabel = document.getElementById('freqLabel');
+const statusLabel = document.getElementById('status');
+const nextBtn = document.getElementById('nextBtn');
+
+const sketch = (p) => {
+    // --- 物理与环境常量 ---
+    const GRAVITY = 0.4;        // 稍微调低重力，让动作更轻盈
+    const DAMPING = 0.98;
+    const OFFSET_Y = 320;       // 波浪基准线
+    const START_POS = { x: 40, y: 120 }; // 复位起始点
+
+    // 平台定义
+    const START_PLAT = { x: 0, y: 150, w: 100, h: 15 };
+    const END_PLAT = { x: 700, y: 150, w: 100, h: 15 };
+
+    // 状态变量
+    let amplitude = 150;
+    let freqB = 0.02;
+    let ball = { x: START_POS.x, y: START_POS.y, vx: 1.2, vy: 0, r: 10 };
+    let hasWon = false;
+
+    p.setup = () => {
+        const canvas = p.createCanvas(800, 400);
+        canvas.parent('canvasContainer');
+        
+        ampSlider.oninput = (e) => {
+            amplitude = parseFloat(e.target.value);
+            ampLabel.innerText = amplitude;
+        };
+        freqSlider.oninput = (e) => {
+            freqB = parseFloat(e.target.value);
+            freqLabel.innerText = freqB.toFixed(3);
+        };
+
+    };
+
+    p.draw = () => {
+        p.clear();
+        p.background(0, 0, 0, 100); 
+        
+        updatePhysics();
+        
+        // 绘制霓虹平台
+        drawPlatform(START_PLAT.x, START_PLAT.y, START_PLAT.w, START_PLAT.h, '#44FF44');
+        drawPlatform(END_PLAT.x, END_PLAT.y, END_PLAT.w, END_PLAT.h, '#FF00FF');
+        
+        // 绘制波动曲线
+        drawWave();
+
+        // 绘制小球
+// ==========================================
+        p.push();
+        p.noStroke();
+
+        // 1. 定义或计算匹配度 (diff)
+        // 假设本关需要玩家把振幅调到 180 才能“共鸣”
+        let targetGoal = 180; 
+        // 计算当前平滑振幅与目标的差值
+        let diff = p.abs(targetGoal - amplitude); 
+
+        // 2. 根据差值计算视觉参数
+        // 差值越小 (0)，透明度越高 (255)，颤动越大 (4px)
+        // 差值越大 (50+)，透明度越低 (50)，颤动消失 (0px)
+        let resonance = p.map(p.constrain(diff, 0, 50), 0, 50, 255, 50); 
+        let tremble = p.map(p.constrain(diff, 0, 10), 0, 10, 1.5, 0); 
+
+        // 3. 绘制外层
+        p.fill(255, 150, 255, resonance* 0.5); 
+        // 随机颤动位移
+        let tx = p.random(-tremble, tremble);
+        let ty = p.random(-tremble, tremble);
+        p.ellipse(ball.x + tx, ball.y + ty, ball.r * 2);
+
+        // 4. 绘制内层：实心核心（稍微带点透明度变化）
+        p.fill(255, 255, 255, resonance + 20);
+        p.ellipse(ball.x, ball.y, ball.r * 1.5);
+
+        p.pop();
+        // ==========================================
+        
+    };
+
+    function drawPlatform(x, y, w, h, color) {
+        p.push();
+        p.noStroke();
+        p.drawingContext.shadowBlur = 15;
+        p.drawingContext.shadowColor = color;
+        p.fill(color);
+        p.rect(x, y, w, h, 2);
+        p.pop();
+    }
+
+    // --- 核心改动：运动变慢 ---
+    function getWaveY(x) {
+        // 将速度系数从 0.05 降至 0.02，波浪会流动得更优雅
+        let t = p.frameCount * 0.02; 
+        return OFFSET_Y - (amplitude * p.sin(x * freqB + t));
+    }
+
+    
+    function drawWave() {
+        p.noFill();
+        p.strokeWeight(4);
+        p.stroke(0, 255, 255, 180);
+        p.beginShape();
+        for (let x = 0; x <= p.width; x += 5) {
+            p.vertex(x, getWaveY(x));
+        }
+        p.endShape();
+    }
+
+    function updatePhysics() {
+        if (hasWon) return;
+
+        // --- A. 边界重置：掉出屏幕立刻回来 ---
+        if (ball.y > p.height || ball.x < -50 || ball.x > p.width + 50) {
+            resetBall();
+            return;
+        }
+
+        // --- B. 基础运动 ---
+        ball.vy += 3*GRAVITY;
+        ball.y += ball.vy;
+        ball.x += ball.vx;
+
+        let waveY = getWaveY(ball.x);
+
+        // --- C. 起始平台检测 ---
+        if (ball.x < START_PLAT.w && ball.vy > 0) {
+            if (ball.y + ball.r > START_PLAT.y) {
+                ball.y = START_PLAT.y - ball.r;
+                ball.vy = 0;
+            }
+        }
+
+        // --- D. 核心修改：波浪碰撞（静默修正） ---
+        // 判定：只要球掉进了波浪里
+        if (ball.y + ball.r > waveY) {
+            
+            /* 关键：无论波浪是因为函数调整还是时间流动而上升的，
+               我们只进行“静默位置修正”，而不给 ball.vy 任何向上的冲量。
+            */
+            ball.y = waveY - ball.r;
+
+            // 只有当小球本身有向下掉的趋势时，才归零速度，防止它穿透
+            // 如果它本来就在上升（比如被惯性抛起），我们不干扰它的 vy
+            if (ball.vy > 0) {
+                ball.vy = 0; 
+            }
+
+            // 计算水平推力（让球顺着坡滚）
+            let slope = (getWaveY(ball.x + 1) - getWaveY(ball.x - 1)) / 2;
+            ball.vx -= slope * 0.25; 
+            ball.vx *= DAMPING;
+        }
+
+        // --- E. 胜利检测 ---
+        if (ball.x > END_PLAT.x && ball.x < END_PLAT.x + END_PLAT.w) {
+            if (p.abs(ball.y + ball.r - END_PLAT.y) < 15 && ball.vy >= 0) {
+                ball.y = END_PLAT.y - ball.r;
+                ball.vx = 0;
+                ball.vy = 0;
+                hasWon = true;
+                statusLabel.innerText = "Bingo!";
+                statusLabel.className = "win";
+                nextBtn.style.display = "inline-block";
+            }
+        }
+    }
+    function resetBall() {
+        ball.x = START_POS.x;
+        ball.y = START_POS.y;
+        ball.vx = 1.2; // 重新给予初始推力
+        ball.vy = 0;
+        statusLabel.innerText = " ";
+        statusLabel.className = ""; // 移除胜利样式
+    }
+    document.getElementById('nextBtn').addEventListener('click', () => {
+    // 这里写进入下一关的逻辑
+    window.location.href = 'level2.html';
+});
+   
+
+};
+
+new p5(sketch);
+    </script>
+</body>
+</html>
