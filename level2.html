@@ -119,7 +119,7 @@
                 let tremble = p.map(p.constrain(diff, 0, 15), 0, 15, 1.5, 0);
 
                 // 
-                p.fill(255, 0, 255, resonance*0.5);
+                p.fill(255, 150, 255, resonance*0.5);
                 let tx = p.random(-tremble, tremble);
                 let ty = p.random(-tremble, tremble);
                 p.ellipse(ball.x + tx, ball.y + ty, ball.r * 2);
