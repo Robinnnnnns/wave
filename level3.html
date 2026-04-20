@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Level 5: Square Wave Architect</title>
+    <title>Harmonic2</title>
     <link rel="stylesheet" type="text/css" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
 </head>
@@ -16,15 +16,16 @@
             <input type="range" id="amp1" min="0" max="150" value="100">
         </div>
         <div class="control-group">
-            <label>f3 (3rd Harmonic): <span id="v3">0</span></label>
-            <input type="range" id="amp3" min="0" max="80" value="0">
+            <label>f3 (3rd Harmonic): <span id="v3">30</span></label>
+            <input type="range" id="amp3" min="0" max="80" value="30">
         </div>
         <div class="control-group">
-            <label>f5 (5th Harmonic): <span id="v5">0</span></label>
-            <input type="range" id="amp5" min="0" max="60" value="0">
+            <label>f5 (5th Harmonic): <span id="v5">20</span></label>
+            <input type="range" id="amp5" min="0" max="60" value="20">
         </div>
+        <div id="status"> </div>
 
-        <button id="nextBtn" style="display: none;">ACCESS FREQUENCY VOID</button>
+        <button id="nextBtn" style="display: none;">NEXT LEVEL</button>
     </div>
 
     <div id="canvasContainer"></div>
@@ -49,11 +50,11 @@
             const FREQ_B = 0.015; // 较长的波长更像桥
             
             const START_PLAT = { x: 0, y: 200, w: 100, h: 15 };
-            const END_PLAT = { x: 650, y: 200, w: 100, h: 15 };
+            const END_PLAT = { x: 700, y: 170, w: 100, h: 15 };
 
             // 状态
-            let amps = [100, 0, 0];
-            let curAmps = [100, 0, 0];
+            let amps = [100, 30, 20];
+            let curAmps = [100, 30, 20];
             let ball = { x: 50, y: 150, vx: 1.2, vy: 0, r: 10 };
             let hasWon = false;
 
@@ -65,6 +66,8 @@
                         labels[i].innerText = Math.round(amps[i]);
                     };
                 });
+                nextBtn.onclick = () => window.location.href = 'level4.html';
+
             };
 
             p.draw = () => {
@@ -85,7 +88,7 @@
             };
 
             function getWaveY(x) {
-                let t = p.frameCount * 0.02;
+                let t = p.frameCount * 0.03;
                 // 傅里叶级数合成：f, 3f, 5f...
                 let y1 = curAmps[0] * p.sin(x * FREQ_B - t);
                 let y3 = curAmps[1] * p.sin(x * (FREQ_B * 3) - t);
@@ -121,7 +124,7 @@
                 let resonance = p.map(p.constrain(error, 0, 40), 0, 40, 200, 50);
                 let tremble = p.map(p.constrain(error, 0, 10), 0, 10, 2, 0);
 
-                p.fill(255, 216, 176, resonance);
+                p.fill(255, 150, 255, resonance);
                 p.ellipse(ball.x + p.random(-tremble, tremble), ball.y + p.random(-tremble, tremble), ball.r * 1.8);
                 p.fill(255, 255, 255, 220);
                 p.ellipse(ball.x, ball.y, ball.r * 1.2);
@@ -138,7 +141,7 @@
                 let waveY = getWaveY(ball.x);
 
                 // 死亡判定：撞到尖刺（低过波浪一定距离或碰到Y范围）
-                if (ball.y > 330) { resetBall(); return; }
+                if (ball.y > 300) { resetBall(); return; }
 
                 // 起始平台
                 if (ball.x < START_PLAT.w && ball.y + ball.r > START_PLAT.y && ball.vy > 0) {
@@ -162,9 +165,8 @@
                 if (ball.x > END_PLAT.x && ball.x < END_PLAT.x + END_PLAT.w) {
                     if (p.abs(ball.y + ball.r - END_PLAT.y) < 15 && ball.vy >= 0) {
                         ball.y = END_PLAT.y - ball.r;
-                        ball.vx = 0; ball.vy = 0;
                         hasWon = true;
-                        document.getElementById('status').innerText = "FOURIER ANALYSIS COMPLETE!";
+                        document.getElementById('status').innerText = "Bingo!";
                         document.getElementById('status').className = "win";
                         document.getElementById('nextBtn').style.display = "inline-block";
                     }

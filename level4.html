@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fourier Gate</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+</head>
+<body>
+
+    <div class="ui">
+     
+
+        <div class="control-group">
+            <label>DOMAIN: <span id="domainLabel">TIME</span></label>
+        </div>
+
+        <div class="control-group">
+            <label>FORMULA: <span id="formulaLabel">y = 95sin(Bx - t) + offset</span></label>
+        </div>
+
+        <div class="control-group">
+            <label class="hint-label">CLICK BUTTON TO SWITCH DOMAIN</label>
+            <button id="switchBtn">SWITCH TO FREQUENCY</button>
+        </div>
+
+     
+
+        <button id="nextBtn" style="display: none;">Congratulations!</button>
+    </div>
+
+    <div id="canvasContainer"></div>
+
+    <script>
+        const domainLabel = document.getElementById('domainLabel');
+        const formulaLabel = document.getElementById('formulaLabel');
+        const nextBtn = document.getElementById('nextBtn');
+        const switchBtn = document.getElementById('switchBtn');
+
+        const sketch = (p) => {
+            const GRAVITY = 0.45;
+            const DAMPING = 0.985;
+            const OFFSET_Y = 310;
+            const START_POS = { x: 50, y: 140 };
+            const FREQ_B = 0.018;
+
+            const START_PLAT = { x: 0, y: 210, w: 100, h: 15 };
+            const MID_PLAT   = { x: 315, y: 250, w: 100,  h: 12 };
+            const END_PLAT   = { x: 430, y: 140, w: 110, h: 15 };
+
+            let mode = "TIME";
+            let hasWon = false;
+
+            let ball = {
+                x: START_POS.x,
+                y: START_POS.y,
+                vx: 0.9,
+                vy: 0,
+                r: 10
+            };
+            let particles = [];
+
+            p.setup = () => {
+                p.createCanvas(800, 400).parent('canvasContainer');
+
+                switchBtn.onclick = () => {
+                    if (hasWon) return;
+                    toggleDomain();
+                };
+
+                nextBtn.onclick = () => {
+                    window.location.href = 'index.html'
+                  
+                };
+
+                updateUI();
+            };
+
+            p.draw = () => {
+                p.clear();
+                p.background(0, 0, 0, 100);
+
+                updatePhysics();
+
+                drawWave();
+                drawNeonPlatform(START_PLAT, '#44FF44');
+                drawNeonPlatform(MID_PLAT, '#FFD700');
+                drawNeonPlatform(END_PLAT, '#FF00FF');
+                drawResonanceBall();
+                updateParticles();
+                
+            };
+
+            function toggleDomain() {
+                mode = (mode === "TIME") ? "FREQ" : "TIME";
+                updateUI();
+            }
+
+            function updateUI() {
+                if (mode === "TIME") {
+                    domainLabel.innerText = "TIME";
+                    formulaLabel.innerText = "y = 95sin(Bx - t) + offset";
+                    switchBtn.innerText = "SWITCH TO FREQUENCY";
+                } else {
+                    domainLabel.innerText = "FREQUENCY";
+                    formulaLabel.innerText = "F(w) = e^(-(w-w0)^2)";
+                    switchBtn.innerText = "SWITCH TO TIME";
+                }
+            }
+
+            function getWaveY(x) {
+                const t = p.frameCount * 0.02;
+
+                if (mode === "TIME") {
+                    const wave = 70 * p.sin(x * FREQ_B - t);
+                    return OFFSET_Y - wave;
+                } else {
+                    const center = 400;
+                    const dist = Math.abs(x - center);
+
+                    if (dist < 35) {
+                        return OFFSET_Y - 190 + dist * 5.2;
+                    } else if (dist < 90) {
+                        return OFFSET_Y - 8 - (90 - dist) * 0.6;
+                    } else {
+                        return OFFSET_Y + 28;
+                    }
+                }
+            }
+
+            function getSlope(x) {
+                return (getWaveY(x + 1) - getWaveY(x - 1)) / 2;
+            }
+
+            function updatePhysics() {
+                if (hasWon) return;
+
+                ball.vy += GRAVITY;
+                ball.vy = p.constrain(ball.vy, -7, 7);
+
+                ball.x += ball.vx;
+                ball.y += ball.vy;
+
+                // 起点平台
+                if (ball.x + ball.r > START_PLAT.x && ball.x - ball.r < START_PLAT.x + START_PLAT.w) {
+                    if (ball.vy >= 0 && ball.y + ball.r >= START_PLAT.y && ball.y < START_PLAT.y + 25) {
+                        ball.y = START_PLAT.y - ball.r;
+                        ball.vy = 0;
+                    }
+                }
+
+                // 中间平台
+                if (ball.x + ball.r > MID_PLAT.x && ball.x - ball.r < MID_PLAT.x + MID_PLAT.w) {
+                    if (ball.vy >= 0 && ball.y + ball.r >= MID_PLAT.y && ball.y < MID_PLAT.y + 25) {
+                        ball.y = MID_PLAT.y - ball.r;
+                        ball.vy = 0;
+                    }
+                }
+
+                // 终点平台
+                if (
+    ball.x + ball.r > END_PLAT.x &&
+    ball.x - ball.r < END_PLAT.x + END_PLAT.w &&
+    ball.y + ball.r >= END_PLAT.y &&
+    ball.y + ball.r <= END_PLAT.y + 20 &&
+    ball.vy >= 0
+) {
+    ball.y = END_PLAT.y - ball.r;
+    ball.vx = 0;
+    ball.vy = 0;
+    hasWon = true;
+    nextBtn.style.display = "inline-block";
+    switchBtn.disabled = true;
+    switchBtn.innerText = "DOMAIN LOCKED";
+    spawnParticles(ball.x, ball.y);
+    return;
+}
+          
+
+                const waveY = getWaveY(ball.x);
+
+                if (ball.y + ball.r > waveY) {
+                    ball.y = waveY - ball.r;
+
+                    if (ball.vy > 0) {
+                        ball.vy = 0;
+                    }
+
+                    const slope = getSlope(ball.x);
+                    ball.vx -= slope * 0.22;
+
+                    if (mode === "TIME") {
+                        ball.vx *= 0.992;
+                    } else {
+                        if (Math.abs(ball.x - 400) < 60) {
+                            ball.vx *= 0.90;
+                        } else {
+                            ball.vx *= 0.975;
+                        }
+                    }
+                }
+
+                ball.vx = p.constrain(ball.vx, -3, 3.5);
+
+                if (ball.y > p.height || ball.x < -120 || ball.x > p.width + 20) {
+                    resetBall();
+                }
+            }
+
+            function resetBall() {
+                ball.x = START_POS.x;
+                ball.y = START_POS.y;
+                ball.vx = 0.9;
+                ball.vy = 0;
+                hasWon = false;
+                nextBtn.style.display = "none";
+                switchBtn.disabled = false;
+                updateUI();
+            }
+
+            function drawWave() {
+                p.noFill();
+                p.strokeWeight(4);
+
+                if (mode === "TIME") {
+                    p.stroke(0, 255, 255, 190);
+                } else {
+                    p.stroke(255, 90, 120, 190);
+                }
+
+                p.beginShape();
+                for (let x = 0; x <= p.width; x += 4) {
+                    p.vertex(x, getWaveY(x));
+                }
+                p.endShape();
+            }
+
+            function drawResonanceBall() {
+                p.push();
+                p.noStroke();
+
+                let glowAlpha = 100;
+                let tremble = 0;
+
+                if (mode === "FREQ") {
+                    const distToCenter = p.abs(ball.x - 400);
+                    glowAlpha = p.map(p.constrain(distToCenter, 0, 100), 0, 100, 180, 60);
+                    tremble = p.map(p.constrain(distToCenter, 0, 50), 0, 50, 2.5, 0.2);
+                } else {
+                    glowAlpha = 90;
+                    tremble = 0.3;
+                }
+
+                const tx = p.random(-tremble, tremble);
+                const ty = p.random(-tremble, tremble);
+
+                if (mode === "TIME") {
+                    p.fill(120, 255, 255, glowAlpha);
+                } else {
+                    p.fill(255, 140, 160, glowAlpha);
+                }
+
+                p.ellipse(ball.x + tx, ball.y + ty, ball.r * 2.1);
+
+                p.fill(255, 255, 255, 230);
+                p.ellipse(ball.x, ball.y, ball.r * 1.2);
+
+                p.pop();
+            }
+
+            function drawNeonPlatform(plat, color) {
+                p.push();
+                p.noStroke();
+                p.drawingContext.shadowBlur = 16;
+                p.drawingContext.shadowColor = color;
+                p.fill(color);
+                p.rect(plat.x, plat.y, plat.w, plat.h, 2);
+                p.pop();
+            }
+
+            function drawGateHint() {
+                if (mode === "FREQ") {
+                    p.push();
+                    p.noFill();
+                    p.stroke(255, 80, 120, 120);
+                    p.strokeWeight(2);
+                    p.rect(365, 70, 70, 170);
+                    p.pop();
+                }
+            }
+
+            function spawnParticles(x, y) {
+    for (let i = 0; i < 40; i++) {
+        particles.push({
+            x: x,
+            y: y,
+            vx: p.random(-2.5, 2.5),
+            vy: p.random(-4, -1),
+            life: 60,
+            size: p.random(4, 8)
+        });
+    }
+}
+function updateParticles() {
+    for (let i = particles.length - 1; i >= 0; i--) {
+        let pt = particles[i];
+
+        // 物理
+        pt.vy += 0.1; // gravity
+        pt.x += pt.vx;
+        pt.y += pt.vy;
+
+        pt.life--;
+
+        // 绘制
+        p.push();
+        p.noStroke();
+
+        let alpha = p.map(pt.life, 0, 60, 0, 255);
+
+        // 彩色撒花
+        p.fill(
+            p.random(150, 255),
+            p.random(100, 255),
+            p.random(150, 255),
+            alpha
+        );
+
+        p.ellipse(pt.x, pt.y, pt.size);
+        p.pop();
+
+        // 删除
+        if (pt.life <= 0) {
+            particles.splice(i, 1);
+        }
+    }
+}
+        };
+
+        new p5(sketch);
+    </script>
+</body>
+</html>

@@ -22,7 +22,18 @@
         align-items: center;     /* 让画布和按钮水平居中对齐 */
         gap: 20px;">
     <div id="canvasContainer"></div>
-    <button id="nextBtn" style="font-size:1.5rem;padding: 10px 20px 10px 20px">START</button>
+    <button id="nextBtn" style="font-size:1.5rem;padding: 10px 32px 10px 32px">START</button>
+    <div class="main-container" style="display: flex; flex-direction: column; align-items: center; gap: 20px;">
+    
+    <div class="level-select" style="display: flex; gap: 25px; margin-top: 10px;">
+        <div class="level-dot" onclick="location.href='demo.html'" data-lv="1"></div>
+        <div class="level-dot" onclick="location.href='level1.html'" data-lv="2"></div>
+        <div class="level-dot" onclick="location.href='level2.html'" data-lv="3"></div>
+        <div class="level-dot" onclick="location.href='level3.html'" data-lv="4"></div>
+        <div class="level-dot" onclick="location.href='level4.html'" data-lv="5"></div>
+    </div>
+
+</div>
 </div>
 
     <script>

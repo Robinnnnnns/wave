@@ -160,3 +160,86 @@ input[type="range"]:active::-webkit-slider-thumb {
     transform: translateY(2px);
     box-shadow: 2px 2px 0px #000;
 }
+
+
+#switchBtn {
+    margin-top: 8px;
+    padding: 5px 20px;
+    background: #00FFFF;
+    color: #1A103D;
+    font-family: monospace;
+    font-size: 1rem;
+    border: 1px solid #FFF;
+    border-radius: 4px;
+    cursor: pointer;
+    box-shadow: 4px 4px 0px #000;
+    transition: transform 0.1s;
+}
+
+#switchBtn:hover {
+    background: #ff00ff;
+    transform: scale(1.05);
+}
+
+#switchBtn:active {
+    transform: translateY(2px);
+    box-shadow: 2px 2px 0px #000;
+}
+
+#switchBtn:disabled {
+    background: #666666;
+    color: #dddddd;
+    cursor: not-allowed;
+    box-shadow: 2px 2px 0px #000;
+}
+
+/* 关卡圆点基础样式 */
+.level-dot {
+    width: 12px;
+    height: 12px;
+    background-color: #ffffff;
+    border-radius: 50%;
+    cursor: pointer;
+    position: relative;
+    /* 奶油色共鸣外圈效果 */
+    box-shadow: 0 0 10px #00FFFF;
+    transition: all 0.3s ease;
+    border: 2px solid #FF96FF;
+}
+
+/* 悬停时的共鸣颤动感 */
+.level-dot:hover {
+    transform: scale(1.2);
+    background-color: #FF96FF; /* 奶油色 */
+    box-shadow: 0 0 10px #00FFFF;
+}
+
+/* 显示关卡数字提示（可选） */
+.level-dot::after {
+    content: attr(data-lv);
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: monospace;
+    color: #77FFFF;
+    font-size: 0.9rem;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.level-dot:hover::after {
+    opacity: 1;
+}
+@keyframes tremble {
+    0% { transform: translate(0,0); }
+    25% { transform: translate(1px, -1px); }
+    50% { transform: translate(-1px, 1px); }
+    75% { transform: translate(1px, 1px); }
+    100% { transform: translate(0,0); }
+}
+
+.level-dot {
+    /* 让圆点有微小的待机抖动 */
+    animation: tremble 2s infinite ease-in-out;
+}

@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>wave2</title>
+    <title>Frequency Bridge</title>
     <link rel="stylesheet" type="text/css" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
 </head>
@@ -93,9 +93,7 @@ const sketch = (p) => {
         // 计算当前平滑振幅与目标的差值
         let diff = p.abs(targetGoal - amplitude); 
 
-        // 2. 根据差值计算视觉参数
-        // 差值越小 (0)，透明度越高 (255)，颤动越大 (4px)
-        // 差值越大 (50+)，透明度越低 (50)，颤动消失 (0px)
+     
         let resonance = p.map(p.constrain(diff, 0, 50), 0, 50, 255, 50); 
         let tremble = p.map(p.constrain(diff, 0, 10), 0, 10, 1.5, 0); 
 
