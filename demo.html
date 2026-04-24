@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Amplitude Bridge</title>
     <link rel="stylesheet" type="text/css" href="style.css">
-<script src="libraries/p5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
 </head>
 <body>
 
@@ -53,7 +53,7 @@
             let hasWon = false;
 
             p.setup = () => {
-                const canvas = p.createCanvas(800, 450);
+                const canvas = p.createCanvas(800, 400);
                 canvas.parent('canvasContainer');
                 
                 // UI 事件监听
